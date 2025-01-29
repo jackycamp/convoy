@@ -34,6 +34,20 @@ iex(convoy3@convoy.local)5> send({Convoy.ConvoyWorker, :"convoy1@convoy.local"},
 Received ping on node convoy1@convoy.local
 ```
 
+## Docker
+
+```bash
+# build and spin it up locally
+# note, you'll have to generate a secret key first
+mix phx.gen.secret
+
+sudo docker run \
+-e SECRET_KEY_BASE="<redacted>" \
+-e PHX_HOST=localhost \
+-p4000:4000 \
+convoy:debug
+```
+
 ## Learn more
 
 - Official website: https://www.phoenixframework.org/
