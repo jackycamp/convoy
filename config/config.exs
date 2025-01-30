@@ -62,9 +62,12 @@ config :tailwind,
 #   ]
 # ]
 
+# FIXME: need to use convoy.railway.internal when deployed
+# or perhaps *.railway.internal ?
 config :libcluster,
   topologies: [
     convoy_topology: [
+      # ref: https://hexdocs.pm/libcluster/Cluster.Strategy.DNSPoll.html#content
       strategy: Cluster.Strategy.DNSPoll,
       config: [
         # port: 45892,
