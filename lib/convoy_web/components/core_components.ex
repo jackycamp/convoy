@@ -677,15 +677,16 @@ defmodule ConvoyWeb.CoreComponents do
   attr :id, :string, required: true
   attr :value, :string, default: ""
   attr :onchange, :any, default: nil
+  # phx-autofocus
+  # phx-mounted={JS.focus(to: "##{@id}")}
 
-  def console_input(assigns) do
+  def shell_input(assigns) do
     ~H"""
     <input
       id={@id}
       value={@value}
-      phx-autofocus
-      phx-mounted={JS.focus(to: "##{@id}")}
       phx-keyup={@onchange}
+      phx-autofocus
       class={[
         "block w-full bg-black text-white focus:ring-0 focus:outline-none sm:leading-6"
       ]}
