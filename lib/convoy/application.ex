@@ -11,7 +11,6 @@ defmodule Convoy.Application do
       {Cluster.Supervisor,
        [Application.get_env(:libcluster, :topologies), [name: Convoy.ClusterSupervisor]]},
       ConvoyWeb.Telemetry,
-      # {DNSCluster, query: Application.get_env(:convoy, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Convoy.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Convoy.Finch},
