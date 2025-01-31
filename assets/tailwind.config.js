@@ -16,6 +16,8 @@ module.exports = {
       colors: {
         brand: "#FD4F00",
         cornflowerblue: "#6495ED",
+        "bubblegum-pink": "#E961A1",
+        "light-plum": "#923D65",
       },
     },
   },
