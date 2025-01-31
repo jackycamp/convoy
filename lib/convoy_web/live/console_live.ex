@@ -2,13 +2,14 @@ defmodule ConvoyWeb.ConsoleLive do
   use ConvoyWeb, :live_view
   require Logger
 
-  @unsafe_terms ["System", "File", "Port", "spawn", "Process"]
+  @unsafe_terms ["System", "File", "Port", "spawn", "Process", "cookie"]
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
       <div
-        class="bg-black w-full rounded-lg h-96 p-2 font-mono text-lg shadow-2xl overflow-y-auto"
+        class="bg-black w-full rounded-lg h-48 md:h-96 p-2 font-mono text-sm md:text-lg shadow-2xl overflow-y-auto"
         phx-click={JS.focus(to: "#cmd-#{length(@history)}-input")}
       >
         <%= for {{cmd, res}, index} <- Enum.with_index(@history) do %>
@@ -32,10 +33,20 @@ defmodule ConvoyWeb.ConsoleLive do
           />
         </div>
       </div>
+
+      <div class="flex justify-end mt-12">
+        <div
+          class="bg-bubblegum-pink flex items-center justify-center p-2 sm:p-4 rounded-full border-2 border-zinc-700 cursor-pointer hover:bg-light-plum"
+          phx-click="launch_node"
+        >
+          <.icon name="hero-rocket-launch" class="text-zinc-900" />
+        </div>
+      </div>
     </div>
     """
   end
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok,
      assign(socket,
@@ -44,6 +55,7 @@ defmodule ConvoyWeb.ConsoleLive do
      )}
   end
 
+  @impl true
   def handle_event("check_cmd", %{"key" => key, "value" => value}, socket) do
     if key == "Enter" do
       result =
@@ -61,11 +73,18 @@ defmodule ConvoyWeb.ConsoleLive do
     end
   end
 
-  @doc """
-  Some really, really, basic unsafe command checking.
-  Still highly insecure. But could be worse!
-  """
-  def check_unsafe_cmd(cmd) when is_binary(cmd) do
+  @impl true
+  def handle_event("launch_node", _params, socket) do
+    # res = Convoy.Railway.me()
+    res = Convoy.Railway.get_services()
+    Logger.info("query result: #{inspect(res)}")
+
+    {:noreply, socket}
+  end
+
+  # Some really basic unsafe command checking.
+  # Still highly insecure. But could be worse!
+  defp check_unsafe_cmd(cmd) when is_binary(cmd) do
     if String.contains?(cmd, @unsafe_terms) do
       raise "Command not permitted"
     else
