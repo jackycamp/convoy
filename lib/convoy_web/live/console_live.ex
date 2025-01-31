@@ -1,8 +1,9 @@
 defmodule ConvoyWeb.ConsoleLive do
   use ConvoyWeb, :live_view
+  alias Convoy.Railway
   require Logger
 
-  @unsafe_terms ["System", "File", "Port", "spawn", "Process", "cookie"]
+  @unsafe_terms ["System", "File", "Port", "spawn", "Process", "cookie", "env"]
 
   @impl true
   def render(assigns) do
@@ -48,6 +49,16 @@ defmodule ConvoyWeb.ConsoleLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    # TODO: on first mount, need to load nodes
+    # Convoy.Railway.get_service_instances()
+    # where latestDeployment.deploymentStopped is false
+    # these are our currently "up nodes", need to connect them as well
+
+    # FIXME: once we have nodes, need to render "shells" for each of them
+    nodes = Railway.get_nodes()
+
+    Logger.info("nodes: #{inspect(nodes)}")
+
     {:ok,
      assign(socket,
        curr_command: "",
@@ -75,9 +86,10 @@ defmodule ConvoyWeb.ConsoleLive do
 
   @impl true
   def handle_event("launch_node", _params, socket) do
-    # res = Convoy.Railway.me()
-    res = Convoy.Railway.get_services()
-    Logger.info("query result: #{inspect(res)}")
+    # FIXME: set limit to number of nodes
+    # FIXME: determine name properly
+    name = "convoy4"
+    Task.start(fn -> Railway.launch_node(name) end)
 
     {:noreply, socket}
   end
