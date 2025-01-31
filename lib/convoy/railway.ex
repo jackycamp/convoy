@@ -176,19 +176,13 @@ defmodule Convoy.Railway do
   end
 
   def delete_service(service_id) do
-    variables = %{
-      "serviceId" => service_id
-    }
-
     Neuron.query(
       """
-      {
-        mutation ServiceDelete($serviceId: String!) {
-          serviceDelete(id: $serviceId)
-        }
+      mutation ServiceDelete($serviceId: String!) {
+        serviceDelete(id: $serviceId)
       }
       """,
-      variables,
+      %{"serviceId" => service_id},
       headers: headers()
     )
   end
@@ -217,8 +211,8 @@ defmodule Convoy.Railway do
     Neuron.query(
       """
       {
-        query  {
-            deployment(id: \"#{deployment_id}\") {
+        query  Deployment($deploymentId: String!){
+            deployment(id: $deploymentId) {
                 environmentId
                 id
                 serviceId
@@ -231,7 +225,7 @@ defmodule Convoy.Railway do
           }
       }
       """,
-      %{},
+      %{"deploymentId" => deployment_id},
       headers: headers()
     )
   end
