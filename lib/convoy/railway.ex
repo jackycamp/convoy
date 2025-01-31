@@ -95,7 +95,7 @@ defmodule Convoy.Railway do
           }
         }
       """,
-      %{"projectId" => projectId},
+      %{"projectId" => @project_id},
       headers: headers()
     )
   end
