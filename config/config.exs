@@ -52,16 +52,6 @@ config :tailwind,
     cd: Path.expand("../assets", __DIR__)
   ]
 
-# config :libcluster,
-# topologies: [
-#   example_topology: [
-#     strategy: Cluster.Strategy.Gossip,
-#     config: [
-#       port: 45892
-#     ]
-#   ]
-# ]
-
 # FIXME: need to use convoy.railway.internal when deployed
 # or perhaps *.railway.internal ?
 config :libcluster,
