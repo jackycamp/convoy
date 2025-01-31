@@ -30,7 +30,7 @@ if config_env() in [:prod, :dev] do
       environment variable RAILWAY_API_URL is missing.
       """
 
-  Neuron.Config.set(url: railway_url)
+  Neuron.Config.set(url: railway_url, connection_opts: [recv_timeout: 15_000])
 
   railway_token =
     System.get_env("RAILWAY_TOKEN") ||
