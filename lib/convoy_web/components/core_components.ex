@@ -687,7 +687,7 @@ defmodule ConvoyWeb.CoreComponents do
       phx-mounted={JS.focus(to: "##{@id}")}
       phx-keyup={@onchange}
       class={[
-        "block w-full bg-black text-white text-lg focus:ring-0 focus:outline-none sm:leading-6"
+        "block w-full bg-black text-white focus:ring-0 focus:outline-none sm:leading-6"
       ]}
     />
     """
