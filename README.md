@@ -1,5 +1,12 @@
 # Convoy
 
+First, set some env vars:
+
+```bash
+export RAILWAY_API_URL=redacted
+export RAILWAY_TOKEN=redacted
+```
+
 To start your Phoenix server:
 
 - Run `mix setup` to install and setup dependencies
