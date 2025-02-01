@@ -10,7 +10,7 @@ defmodule ConvoyWeb.ShellLive do
   def render(assigns) do
     ~H"""
     <div
-      class="relative text-white bg-black w-full rounded-lg min-w-[30vw] max-w-[30vw] h-48 md:h-96 font-mono text-sm xl:text-lg shadow-2xl overflow-y-auto"
+      class="text-white bg-black rounded-lg w-[30rem] h-96 font-mono text-sm xl:text-lg shadow-2xl overflow-y-auto"
       phx-click={JS.focus(to: "#node-shell-#{@node_id}-cmd-#{length(@history)}-input")}
     >
       <div class="flex justify-between text-sm bg-[#343639] py-2 px-2 mb-2">
