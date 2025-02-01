@@ -13,7 +13,8 @@ defmodule ConvoyWeb.ConsoleLive do
             id: "node-shell-#{node_id}",
             session: %{
               "node_id" => node_id,
-              "is_ctrl" => node["serviceName"] == "convoy"
+              "is_ctrl" => node["serviceName"] == "convoy",
+              "node" => node
             }
           )}
         <% end %>

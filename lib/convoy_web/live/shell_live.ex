@@ -10,11 +10,17 @@ defmodule ConvoyWeb.ShellLive do
   def render(assigns) do
     ~H"""
     <div
-      class="relative bg-black w-full rounded-lg min-w-[30vw] max-w-[30vw] h-48 md:h-96 p-2 font-mono text-sm md:text-lg shadow-2xl overflow-y-auto"
+      class="relative text-white bg-black w-full rounded-lg min-w-[30vw] max-w-[30vw] h-48 md:h-96 font-mono text-sm xl:text-lg shadow-2xl overflow-y-auto"
       phx-click={JS.focus(to: "#node-shell-#{@node_id}-cmd-#{length(@history)}-input")}
     >
+      <div class="flex justify-between text-sm bg-[#343639] py-2 px-2 mb-2">
+        <div>{@node["serviceName"]}</div>
+        <div :if={!@is_ctrl} phx-click="del_node" class="hover:text-gray-500 cursor-pointer">
+          <.icon name="hero-power" class="h-5" />
+        </div>
+      </div>
       <%= for {{cmd, res}, index} <- Enum.with_index(@history) do %>
-        <div>
+        <div class="px-2">
           <div class="flex items-center gap-2">
             <p class="text-white">iex({index})></p>
             <p class="text-white">{cmd}</p>
@@ -25,7 +31,7 @@ defmodule ConvoyWeb.ShellLive do
         </div>
       <% end %>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 px-2">
         <p class="text-white">iex({length(@history)})></p>
         <.shell_input
           id={"node-shell-#{@node_id}-cmd-#{length(@history)}-input"}
@@ -33,16 +39,16 @@ defmodule ConvoyWeb.ShellLive do
           onchange="check_cmd"
         />
       </div>
-
-      <div class="absolute bottom-0 right-0 text-white">
-        <div><.icon name="hero-power" /></div>
-      </div>
     </div>
     """
   end
 
   @impl true
-  def mount(:not_mounted_at_router, %{"node_id" => node_id, "is_ctrl" => is_ctrl}, socket) do
+  def mount(
+        :not_mounted_at_router,
+        %{"node_id" => node_id, "is_ctrl" => is_ctrl, "node" => node},
+        socket
+      ) do
     # TODO: render name of node at bottom of shell, or perhaps top of shell? with status?
     # should have some tools available, such as power, etc
     #
@@ -51,6 +57,7 @@ defmodule ConvoyWeb.ShellLive do
     {:ok,
      assign(socket,
        node_id: node_id,
+       node: node,
        is_ctrl: is_ctrl,
        curr_command: "",
        history: []
@@ -73,6 +80,24 @@ defmodule ConvoyWeb.ShellLive do
     else
       {:noreply, assign(socket, curr_command: value)}
     end
+  end
+
+  @impl true
+  def handle_event("del_node", _params, socket) do
+    id = socket.assigns.node_id
+    service_id = socket.assigns.node["serviceId"]
+    Logger.info("del node id: #{id}, service id #{service_id}")
+
+    case Railway.delete_service(service_id) do
+      {:ok, %Neuron.Response{status_code: 200, body: body}} ->
+        # TODO: broadcast deletion of node id
+        Logger.info("deleted node: #{inspect(body)}")
+
+      {:error, reason} ->
+        Logger.info("could not delete node: #{inspect(reason)}")
+    end
+
+    {:noreply, socket}
   end
 
   # Some really basic unsafe command checking.
