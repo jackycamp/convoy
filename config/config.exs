@@ -55,7 +55,7 @@ config :tailwind,
 query =
   case Mix.env() do
     :dev -> "convoy.local"
-    :prod -> "railway.internal"
+    :prod -> "convoy.railway.internal"
     _ -> "convoy.local"
   end
 

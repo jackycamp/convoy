@@ -147,9 +147,9 @@ defmodule Convoy.Railway do
           "PHX_HOST" => "#{name}-production.up.railway.app",
           "PORT" => "4000",
           "RELEASE_DISTRIBUTION" => "name",
-          # "RELEASE_NODE" => "#{name}@#{name}.railway.internal",
+          "RELEASE_NODE" => "#{name}@#{name}.railway.internal",
           # "RELEASE_NODE" => "#{name}@convoy.railway.internal",
-          "RELEASE_NODE" => "convoy@#{name}.railway.internal",
+          # "RELEASE_NODE" => "convoy@#{name}.railway.internal",
           "SECRET_KEY_BASE" => "#{gen_secret_key()}",
           "RAILWAY_API_URL" => "#{Application.get_env(:convoy, :railway_url)}",
           "RAILWAY_TOKEN" => "#{Application.get_env(:convoy, :railway_token)}"
