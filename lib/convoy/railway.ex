@@ -103,8 +103,8 @@ defmodule Convoy.Railway do
   def get_service_instances() do
     Neuron.query(
       """
-      {
-        environment(id: \"#{@environment_id}\") {
+      query Environment($environmentId: String!){
+        environment(id: $environmentId) {
           id
           name
           serviceInstances {
@@ -129,7 +129,7 @@ defmodule Convoy.Railway do
         }
       }
       """,
-      %{},
+      %{"environmentId" => @environment_id},
       headers: headers()
     )
   end
