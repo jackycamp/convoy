@@ -147,8 +147,10 @@ defmodule Convoy.Railway do
           "PHX_HOST" => "#{name}-production.up.railway.app",
           "PORT" => "4000",
           "RELEASE_DISTRIBUTION" => "name",
-          "RELEASE_NODE" => "#{name}@#{name}.railway.internal",
-          "SECRET_KEY_BASE" => "foobar",
+          # "RELEASE_NODE" => "#{name}@#{name}.railway.internal",
+          # "RELEASE_NODE" => "#{name}@convoy.railway.internal",
+          "RELEASE_NODE" => "convoy@#{name}.railway.internal",
+          "SECRET_KEY_BASE" => "#{gen_secret_key()}",
           "RAILWAY_API_URL" => "#{Application.get_env(:convoy, :railway_url)}",
           "RAILWAY_TOKEN" => "#{Application.get_env(:convoy, :railway_token)}"
         }
@@ -333,5 +335,15 @@ defmodule Convoy.Railway do
         """
 
     [authorization: "Bearer #{token}"]
+  end
+
+  defp gen_secret_key do
+    # in a deployed environment, SECRET_KEY_BASE
+    # must exist for all nodes. These do not need to be the same
+    # among nodes in the cluster tho. So we just generate a random one each time.
+    # Must be at least 64 bytes.
+    64
+    |> :crypto.strong_rand_bytes()
+    |> Base.encode64(padding: false)
   end
 end

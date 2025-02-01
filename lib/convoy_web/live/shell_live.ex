@@ -9,9 +9,9 @@ defmodule ConvoyWeb.ShellLive do
     "File",
     "Port",
     "spawn",
-    "Process",
+    "Process"
     # "cookie",
-    "env"
+    # "env"
   ]
 
   @impl true

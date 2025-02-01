@@ -81,5 +81,6 @@ defmodule ConvoyWeb.ConsoleLive do
     :crypto.strong_rand_bytes(3)
     |> Base.url_encode64(padding: false)
     |> binary_part(0, 4)
+    |> String.downcase()
   end
 end
