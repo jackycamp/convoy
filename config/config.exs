@@ -59,6 +59,8 @@ query =
     _ -> "convoy.local"
   end
 
+IO.puts("libcluster query: #{query}")
+
 config :libcluster,
   topologies: [
     convoy_topology: [
