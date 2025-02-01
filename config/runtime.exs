@@ -20,6 +20,31 @@ if System.get_env("PHX_SERVER") do
   config :convoy, ConvoyWeb.Endpoint, server: true
 end
 
+if config_env() in [:prod, :dev] do
+  # Retrieving railway related env vars
+  # Configuring neuron, our graphql api client, to always use
+  # the railway api url specified in the environment.
+  railway_url =
+    System.get_env("RAILWAY_API_URL") ||
+      raise """
+      environment variable RAILWAY_API_URL is missing.
+      """
+
+  # Setting multiple options at once doesn't work unfortunately..
+  # Neuron.Config.set(url: railway_url, connection_opts: [recv_timeout: 15_000])
+  Neuron.Config.set(url: railway_url)
+  Neuron.Config.set(connection_opts: [recv_timeout: 15_000])
+
+  railway_token =
+    System.get_env("RAILWAY_TOKEN") ||
+      raise """
+      environment variable RAILWAY_TOKEN is missing.
+      """
+
+  config :convoy, :railway_token, railway_token
+  config :convoy, :railway_url, railway_url
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
@@ -35,8 +60,6 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
-
-  # config :convoy, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :convoy, ConvoyWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

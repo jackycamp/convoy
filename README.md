@@ -1,5 +1,12 @@
 # Convoy
 
+First, set some env vars:
+
+```bash
+export RAILWAY_API_URL=redacted
+export RAILWAY_TOKEN=redacted
+```
+
 To start your Phoenix server:
 
 - Run `mix setup` to install and setup dependencies
@@ -12,6 +19,9 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 ## Cluster stuff
 
 ```bash
+# add this to your /etc/hosts
+127.0.0.1   convoy.local
+
 # locally, with 3 separate shells open
 # must specify port as to not interfere with eachother
 PORT=4000 iex --name convoy1@convoy.local --cookie my_secret -S mix phx.server
@@ -34,6 +44,11 @@ iex(convoy3@convoy.local)5> send({Convoy.ConvoyWorker, :"convoy1@convoy.local"},
 Received ping on node convoy1@convoy.local
 ```
 
+In a deployed enviroment, ensure that some RELEASE environment variables are set.
+
+RELEASE_DISTRIBUTION=name
+RELEASE_NODE=convoy@convoy.railway.internal
+
 ## Docker
 
 ```bash
@@ -47,6 +62,25 @@ sudo docker run \
 -p4000:4000 \
 convoy:debug
 ```
+
+For more information about deploying with Docker see
+https://hexdocs.pm/phoenix/releases.html#containers
+
+Here are some useful release commands you can run in any release environment:
+
+    # To build a release
+    mix release
+
+    # To start your system with the Phoenix server running
+    _build/dev/rel/convoy/bin/server
+
+Once the release is running you can connect to it remotely:
+
+    _build/dev/rel/convoy/bin/convoy remote
+
+To list all commands:
+
+    _build/dev/rel/convoy/bin/convoy
 
 ## Learn more
 

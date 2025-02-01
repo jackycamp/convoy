@@ -673,4 +673,24 @@ defmodule ConvoyWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  attr :id, :string, required: true
+  attr :value, :string, default: ""
+  attr :onchange, :any, default: nil
+  # phx-autofocus
+  # phx-mounted={JS.focus(to: "##{@id}")}
+
+  def shell_input(assigns) do
+    ~H"""
+    <input
+      id={@id}
+      value={@value}
+      phx-keyup={@onchange}
+      phx-autofocus
+      class={[
+        "block w-full bg-black text-white focus:ring-0 focus:outline-none sm:leading-6"
+      ]}
+    />
+    """
+  end
 end

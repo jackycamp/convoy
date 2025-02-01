@@ -17,7 +17,7 @@ defmodule ConvoyWeb.Router do
   scope "/", ConvoyWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", ConsoleLive
   end
 
   # Other scopes may use custom stacks.
@@ -38,7 +38,6 @@ defmodule ConvoyWeb.Router do
       pipe_through :browser
 
       live_dashboard "/dashboard", metrics: ConvoyWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
 end

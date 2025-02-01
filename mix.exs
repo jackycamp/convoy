@@ -32,7 +32,6 @@ defmodule Convoy.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:libcluster, "~> 3.3"},
       {:phoenix, "~> 1.7.18"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
@@ -54,8 +53,19 @@ defmodule Convoy.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.26"},
       {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+
+      # For clustering elixir nodes in deployed environments
+      # (also works locally but less exciting)
+      # https://hexdocs.pm/libcluster/readme.html
+      # See the modules section in hexdocs for the various topology
+      # strategies available: https://hexdocs.pm/libcluster/Cluster.Strategy.DNSPoll.html
+      {:libcluster, "~> 3.3"},
+
+      # Neuron, graphql api client, makes writing
+      # graphql queries a breeze
+      # https://hexdocs.pm/neuron/readme.html
+      {:neuron, "~>5.1.0"}
     ]
   end
 
