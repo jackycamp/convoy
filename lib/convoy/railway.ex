@@ -148,7 +148,9 @@ defmodule Convoy.Railway do
           "PORT" => "4000",
           "RELEASE_DISTRIBUTION" => "name",
           "RELEASE_NODE" => "#{name}@#{name}.railway.internal",
-          "SECRET_KEY_BASE" => "foobar"
+          "SECRET_KEY_BASE" => "foobar",
+          "RAILWAY_API_URL" => "#{Application.get_env(:convoy, :railway_url)}",
+          "RAILWAY_TOKEN" => "#{Application.get_env(:convoy, :railway_token)}"
         }
       }
     }
