@@ -11,12 +11,19 @@ defmodule ConvoyWeb.ShellLive do
     ~H"""
     <div
       class="text-white bg-black rounded-lg w-[30rem] h-96 font-mono text-sm xl:text-lg shadow-2xl overflow-y-auto"
-      phx-click={JS.focus(to: "#node-shell-#{@node_id}-cmd-#{length(@history)}-input")}
+      phx-click={JS.focus(to: "#node-shell-#{@node.name}-cmd-#{length(@history)}-input")}
     >
       <div class="flex justify-between text-sm bg-[#343639] py-2 px-2 mb-2">
-        <div>{@node["serviceName"]}</div>
-        <div :if={!@is_ctrl} phx-click="del_node" class="hover:text-gray-500 cursor-pointer">
+        <div>{@node.name}</div>
+        <div
+          :if={!@node.control_plane? && @node.status == "SUCCESS"}
+          phx-click="del_node"
+          class="hover:text-gray-500 cursor-pointer"
+        >
           <.icon name="hero-power" class="h-5" />
+        </div>
+        <div :if={@node.status == "deleting"}>
+          <.icon name="hero-face-frown" class="h-5 animate-spin" />
         </div>
       </div>
       <%= for {{cmd, res}, index} <- Enum.with_index(@history) do %>
@@ -31,34 +38,32 @@ defmodule ConvoyWeb.ShellLive do
         </div>
       <% end %>
 
-      <div class="flex items-center gap-2 px-2">
+      <div :if={@node.status == "SUCCESS"} class="flex items-center gap-2 px-2">
         <p class="text-white">iex({length(@history)})></p>
         <.shell_input
-          id={"node-shell-#{@node_id}-cmd-#{length(@history)}-input"}
+          id={"node-shell-#{@node.name}-cmd-#{length(@history)}-input"}
           value={@curr_command}
           onchange="check_cmd"
         />
+      </div>
+      <div :if={@node.status != "SUCCESS"} class="flex items-center gap-2 px-2">
+        <p class="text-gray-500">{@node.status}</p>
       </div>
     </div>
     """
   end
 
   @impl true
-  def mount(
-        :not_mounted_at_router,
-        %{"node_id" => node_id, "is_ctrl" => is_ctrl, "node" => node},
-        socket
-      ) do
-    # TODO: render name of node at bottom of shell, or perhaps top of shell? with status?
-    # should have some tools available, such as power, etc
-    #
-    # whenever a node is launched, subscribe to that node
+  def mount(:not_mounted_at_router, %{"node" => %Convoy.Node{} = node}, socket) do
+    # whenever a shell is mounted for a particular node
+    # we subscribe to that node, that's how we can stay
+    # up to date on status changes and external messages
+    # from other nodes.
+    Convoy.NodePubsub.subscribe(node.name)
 
     {:ok,
      assign(socket,
-       node_id: node_id,
        node: node,
-       is_ctrl: is_ctrl,
        curr_command: "",
        history: []
      )}
@@ -67,6 +72,10 @@ defmodule ConvoyWeb.ShellLive do
   @impl true
   def handle_event("check_cmd", %{"key" => key, "value" => value}, socket) do
     if key == "Enter" do
+      node = socket.assigns.node
+      Logger.info("this node: #{Node.self()}")
+      Logger.info("name: #{node.name}")
+
       result =
         try do
           {val, _} = Code.eval_string(check_unsafe_cmd(value))
@@ -84,19 +93,37 @@ defmodule ConvoyWeb.ShellLive do
 
   @impl true
   def handle_event("del_node", _params, socket) do
-    id = socket.assigns.node_id
-    service_id = socket.assigns.node["serviceId"]
-    Logger.info("del node id: #{id}, service id #{service_id}")
+    # starts a background task to handle deleting the node 
+    # and communicating status updates -> faster UI updates
+    %Convoy.Node{} = node = socket.assigns.node
+    Task.start(fn -> Railway.delete_node(node) end)
+    {:noreply, assign(socket, node: Convoy.Node.set_status(node, "deleting"))}
+  end
 
-    case Railway.delete_service(service_id) do
-      {:ok, %Neuron.Response{status_code: 200, body: body}} ->
-        Phoenix.PubSub.broadcast(Convoy.PubSub, "nodes", {:del_node, id})
-        Logger.info("deleted node: #{inspect(body)}")
+  @impl true
+  def handle_info({:load_instance_info, instance}, socket) do
+    Logger.info(":load_instance_info: #{inspect(instance)}")
+    node = Convoy.Node.load_instance_info(socket.assigns.node, instance)
+    {:noreply, assign(socket, node: node)}
+  end
 
-      {:error, reason} ->
-        Logger.info("could not delete node: #{inspect(reason)}")
+  @impl true
+  def handle_info({:set_status, status}, socket) do
+    Logger.info(":set_status #{status}")
+    node = socket.assigns.node
+
+    if status != node.status do
+      {:noreply, assign(socket, node: Convoy.Node.set_status(node, status))}
+    else
+      {:noreply, socket}
     end
+  end
 
+  @impl true
+  def handle_info(msg, socket) do
+    # generic handle_info, so that we don't have 
+    # to handle all possible messages for a channel
+    Logger.info("skipping message: #{inspect(msg)}")
     {:noreply, socket}
   end
 

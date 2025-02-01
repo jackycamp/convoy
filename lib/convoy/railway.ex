@@ -13,7 +13,7 @@ defmodule Convoy.Railway do
           String.contains?(name, "convoy")
         end)
         |> Enum.map(& &1["node"])
-        |> Map.new(fn node -> {node["id"], node} end)
+        |> Map.new(fn node -> {node["serviceName"], Convoy.Node.from_service_instance(node)} end)
 
       {:ok, %Neuron.Response{status_code: status_code, body: body}} ->
         {:error, "Received unexpected status code: #{status_code}, #{inspect(body)}"}
@@ -42,25 +42,25 @@ defmodule Convoy.Railway do
         edges = get_in(body, ["data", "serviceCreate", "serviceInstances", "edges"])
         instance = hd(edges)
         Logger.info("instance: #{inspect(instance)}")
-        # TODO: need more properties here
         service_id = get_in(instance, ["node", "serviceId"])
         Logger.info("got service id!: #{service_id}")
-        Phoenix.PubSub.broadcast(Convoy.PubSub, "nodes", {:add_node, instance["node"]})
+        Convoy.NodePubsub.broadcast(name, {:load_instance_info, instance["node"]})
 
         case service_instance_deploy(service_id) do
           {:ok, %Neuron.Response{status_code: 200, body: body}} ->
             deployment_id = get_in(body, ["data", "serviceInstanceDeployV2"])
             Logger.info("got deployment!: #{deployment_id}")
-            start_deployment_watcher(deployment_id)
+            Convoy.NodePubsub.broadcast(name, {:set_status, "starting deployment"})
+            start_deployment_watcher(name, deployment_id)
 
           {:error, reason} ->
-            # TODO: broadcast failure
             Logger.info("failed to deploy service instance: #{inspect(reason)}")
+            Convoy.NodePubsub.broadcast(name, {:set_status, "FAILED"})
         end
 
       {:error, reason} ->
-        # TODO: broadcast failure 
         Logger.info("failed to create service: #{inspect(reason)}")
+        Convoy.NodePubsub.broadcast(name, {:set_status, "FAILED"})
     end
   end
 
@@ -179,6 +179,23 @@ defmodule Convoy.Railway do
     )
   end
 
+  def delete_node(%Convoy.Node{} = node) do
+    case delete_service(node.service_id) do
+      {:ok, %Neuron.Response{status_code: 200, body: body}} ->
+        Phoenix.PubSub.broadcast(Convoy.PubSub, "nodes", {:del_node, node.name})
+        Logger.info("deleted node: #{inspect(body)}")
+
+      {:ok, %Neuron.Response{status_code: status_code, body: body}} ->
+        Logger.info("got unexpected status code when deleting node: #{status_code}}")
+        Logger.info("response body: #{inspect(body)}")
+        Convoy.NodePubsub.broadcast(node.name, {:set_status, "failed to delete"})
+
+      {:error, reason} ->
+        Logger.info("could not delete node: #{inspect(reason)}")
+        Convoy.NodePubsub.broadcast(node.name, {:set_status, "failed to delete"})
+    end
+  end
+
   def delete_service(service_id) do
     Neuron.query(
       """
@@ -265,23 +282,21 @@ defmodule Convoy.Railway do
     )
   end
 
-  defp start_deployment_watcher(deployment_id) do
+  defp start_deployment_watcher(name, deployment_id) do
     :timer.sleep(1500)
 
     Logger.info("deployment watcher, checking status")
 
     case get_deployment_status(deployment_id) do
       :success ->
-        # TODO: broadcast completion
-        nil
+        Convoy.NodePubsub.broadcast(name, {:set_status, "SUCCESS"})
 
-      :in_progress ->
-        # TODO: broadcast last event?
-        start_deployment_watcher(deployment_id)
+      {:in_progress, detail} ->
+        Convoy.NodePubsub.broadcast(name, {:set_status, detail})
+        start_deployment_watcher(name, deployment_id)
 
       :failed ->
-        # TODO: broadcast failure
-        nil
+        Convoy.NodePubsub.broadcast(name, {:set_status, "FAILED"})
     end
   end
 
@@ -297,9 +312,9 @@ defmodule Convoy.Railway do
             Logger.info("deployment failed. boo")
             :failed
 
-          _ ->
-            Logger.info("deployment still in progress")
-            :in_progress
+          in_progress ->
+            Logger.info("deployment still in progress: #{in_progress}")
+            {:in_progress, in_progress}
         end
 
       {:error, reason} ->

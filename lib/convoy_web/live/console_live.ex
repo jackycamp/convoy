@@ -8,12 +8,10 @@ defmodule ConvoyWeb.ConsoleLive do
     ~H"""
     <div>
       <div class="flex flex-wrap justify-center gap-2">
-        <%= for {node_id, node} <- @nodes do %>
+        <%= for {node_name, node} <- @nodes do %>
           {live_render(@socket, ConvoyWeb.ShellLive,
-            id: "node-shell-#{node_id}",
+            id: "node-shell-#{node_name}",
             session: %{
-              "node_id" => node_id,
-              "is_ctrl" => node["serviceName"] == "convoy",
               "node" => node
             }
           )}
@@ -47,12 +45,22 @@ defmodule ConvoyWeb.ConsoleLive do
 
   @impl true
   def handle_event("launch_node", _params, socket) do
-    # FIXME: set limit to number of nodes
-    name = "convoy-#{shortid()}"
-    Logger.info("generated name: #{name}")
-    Task.start(fn -> Railway.launch_node(name) end)
+    if length(Map.keys(socket.assigns.nodes)) >= 5 do
+      # FIXME: flash message of at cluster limit or something
+      Logger.info("at cluster limit, cannot add more nodes!")
+      {:noreply, socket}
+    else
+      name = "convoy-#{shortid()}"
+      Logger.info("generated name: #{name}")
+      Task.start(fn -> Railway.launch_node(name) end)
 
-    {:noreply, socket}
+      node =
+        Convoy.Node.with_name(name)
+        |> Convoy.Node.set_status("creating service")
+
+      nodes = Map.put(socket.assigns.nodes, name, node)
+      {:noreply, assign(socket, nodes: nodes)}
+    end
   end
 
   @impl true
