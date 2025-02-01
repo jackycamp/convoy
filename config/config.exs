@@ -52,8 +52,14 @@ config :tailwind,
     cd: Path.expand("../assets", __DIR__)
   ]
 
-# FIXME: need to use convoy.railway.internal when deployed
-# or perhaps *.railway.internal ?
+query =
+  case Mix.env() do
+    :dev -> "convoy.local"
+    # likely won't work
+    :prod -> "convoy.railway.internal"
+    _ -> "convoy.local"
+  end
+
 config :libcluster,
   topologies: [
     convoy_topology: [
@@ -62,9 +68,8 @@ config :libcluster,
       config: [
         # port: 45892,
         polling_interval: 5_000,
-        query: "convoy.local",
+        query: query,
         node_basename: "convoy"
-        # node_basename: "node"
       ]
     ]
   ]
