@@ -90,7 +90,7 @@ defmodule ConvoyWeb.ShellLive do
 
     case Railway.delete_service(service_id) do
       {:ok, %Neuron.Response{status_code: 200, body: body}} ->
-        # TODO: broadcast deletion of node id
+        Phoenix.PubSub.broadcast(Convoy.PubSub, "nodes", {:del_node, id})
         Logger.info("deleted node: #{inspect(body)}")
 
       {:error, reason} ->

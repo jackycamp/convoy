@@ -41,8 +41,11 @@ defmodule Convoy.Railway do
       {:ok, %Neuron.Response{status_code: 200, body: body}} ->
         edges = get_in(body, ["data", "serviceCreate", "serviceInstances", "edges"])
         instance = hd(edges)
+        Logger.info("instance: #{inspect(instance)}")
+        # TODO: need more properties here
         service_id = get_in(instance, ["node", "serviceId"])
         Logger.info("got service id!: #{service_id}")
+        Phoenix.PubSub.broadcast(Convoy.PubSub, "nodes", {:add_node, instance["node"]})
 
         case service_instance_deploy(service_id) do
           {:ok, %Neuron.Response{status_code: 200, body: body}} ->

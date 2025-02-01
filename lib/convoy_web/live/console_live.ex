@@ -34,14 +34,9 @@ defmodule ConvoyWeb.ConsoleLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    # TODO: on first mount, need to load nodes
-    # Convoy.Railway.get_service_instances()
-    # where latestDeployment.deploymentStopped is false
-    # these are our currently "up nodes", need to connect them as well
+    Phoenix.PubSub.subscribe(Convoy.PubSub, "nodes")
 
-    # FIXME: once we have nodes, need to render "shells" for each of them
     nodes = Railway.get_nodes()
-
     Logger.info("nodes: #{inspect(nodes)}")
 
     {:ok,
@@ -53,10 +48,30 @@ defmodule ConvoyWeb.ConsoleLive do
   @impl true
   def handle_event("launch_node", _params, socket) do
     # FIXME: set limit to number of nodes
-    # FIXME: determine name properly
-    name = "convoy3"
+    name = "convoy-#{shortid()}"
+    Logger.info("generated name: #{name}")
     Task.start(fn -> Railway.launch_node(name) end)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:add_node, node}, socket) do
+    Logger.info("handle info, add node: #{inspect(node)}}")
+    nodes = Map.put(socket.assigns.nodes, node["id"], node)
+    {:noreply, assign(socket, nodes: nodes)}
+  end
+
+  @impl true
+  def handle_info({:del_node, id}, socket) do
+    Logger.info("handle info, del node, #{id}")
+    nodes = Map.delete(socket.assigns.nodes, id)
+    {:noreply, assign(socket, nodes: nodes)}
+  end
+
+  defp shortid() do
+    :crypto.strong_rand_bytes(3)
+    |> Base.url_encode64(padding: false)
+    |> binary_part(0, 4)
   end
 end
