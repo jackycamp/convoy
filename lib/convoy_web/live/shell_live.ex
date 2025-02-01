@@ -4,7 +4,15 @@ defmodule ConvoyWeb.ShellLive do
   alias Convoy.Railway
   require Logger
 
-  @unsafe_terms ["System", "File", "Port", "spawn", "Process", "cookie", "env"]
+  @unsafe_terms [
+    "System",
+    "File",
+    "Port",
+    "spawn",
+    "Process",
+    # "cookie",
+    "env"
+  ]
 
   @impl true
   def render(assigns) do
@@ -75,6 +83,10 @@ defmodule ConvoyWeb.ShellLive do
       node = socket.assigns.node
       Logger.info("this node: #{Node.self()}")
       Logger.info("name: #{node.name}")
+
+      # TODO: if node.self corresponds to node.name than
+      # we eval that command. otherwise we broadcast the cmd 
+      # as a message to the proper node
 
       result =
         try do
