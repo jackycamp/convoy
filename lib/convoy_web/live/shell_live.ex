@@ -5,11 +5,11 @@ defmodule ConvoyWeb.ShellLive do
   require Logger
 
   @unsafe_terms [
-    "System",
-    "File",
-    "Port",
-    "spawn",
-    "Process"
+    # "System",
+    # "File",
+    # "Port",
+    # "spawn",
+    # "Process"
     # "cookie",
     # "env"
   ]
@@ -90,7 +90,10 @@ defmodule ConvoyWeb.ShellLive do
 
       result =
         try do
-          {val, _} = Code.eval_string(check_unsafe_cmd(value))
+          Logger.info("raw cmd: #{value}")
+          {val, binding} = Code.eval_string(check_unsafe_cmd(value))
+          Logger.info("result: #{inspect(val)}")
+          Logger.info("binding: #{inspect(binding)}")
           inspect(val)
         rescue
           e -> "Error: #{Exception.message(e)}"

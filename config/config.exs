@@ -65,7 +65,6 @@ config :libcluster,
       # ref: https://hexdocs.pm/libcluster/Cluster.Strategy.DNSPoll.html#content
       strategy: Cluster.Strategy.DNSPoll,
       config: [
-        # port: 45892,
         polling_interval: 5_000,
         query: query,
         node_basename: "convoy"
