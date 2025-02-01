@@ -42,6 +42,7 @@ if config_env() in [:prod, :dev] do
       """
 
   config :convoy, :railway_token, railway_token
+  config :convoy, :railway_url, railway_url
 end
 
 if config_env() == :prod do
