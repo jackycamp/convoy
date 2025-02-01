@@ -111,6 +111,7 @@ defmodule Convoy.Railway do
               edges {
                   node {
                       id
+                      serviceId
                       serviceName
                       source {
                           repo
