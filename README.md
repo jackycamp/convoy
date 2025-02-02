@@ -9,12 +9,14 @@ for the elixir nodes in our Railway environment and all on the same private inte
 Below, we're manually connecting the nodes using `Node.connect/1`.
 
 https://github.com/user-attachments/assets/458797d5-807a-46cb-b6c1-1de4309d1f97
+
 [manual node connect on yt](https://youtu.be/JZABhEIZkko)
 
 And here, we spin up some new nodes, wait for them to deploy,
 and see them connect automatically!!
 
 https://github.com/user-attachments/assets/ab1a363f-d636-4fc2-b706-11c24f6ff363
+
 [elixir nodes autodiscover on yt](https://youtu.be/JZABhEIZkko)
 
 ## Setting up the project
