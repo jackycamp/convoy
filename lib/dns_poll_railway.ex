@@ -59,6 +59,8 @@ defmodule Convoy.DnsPollRailway do
     new_nodelist = state |> get_nodes() |> MapSet.new()
     removed = MapSet.difference(state.meta, new_nodelist)
 
+    new_nodelist = [:"convoy@convoy.railway.internal"]
+
     new_nodelist =
       case Strategy.disconnect_nodes(
              topology,

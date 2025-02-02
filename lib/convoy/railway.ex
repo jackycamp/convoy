@@ -154,7 +154,9 @@ defmodule Convoy.Railway do
           "RAILWAY_API_URL" => "#{Application.get_env(:convoy, :railway_url)}",
           "RAILWAY_TOKEN" => "#{Application.get_env(:convoy, :railway_token)}",
           "ECTO_IPV6" => "true",
-          "ERL_AFLAGS" => "-proto_dist inet6_tcp"
+          "RELEASE_COOKIE" => "super-secret-cookie",
+          "ERL_AFLAGS" =>
+            "-proto_dist inet6_tcp -kernel inet_dist_listen_min 4444 inet_dist_listen_max 4444"
         }
       }
     }
