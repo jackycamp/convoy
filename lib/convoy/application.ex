@@ -13,7 +13,15 @@ defmodule Convoy.Application do
       ConvoyWeb.Telemetry,
       {Phoenix.PubSub, name: Convoy.PubSub},
       # Start the Finch HTTP client for sending emails
-      {Finch, name: Convoy.Finch},
+      {Finch,
+       name: Convoy.Finch,
+       pools: %{
+         default: [
+           conn_opts: [
+             transport_opts: [inet6: true]
+           ]
+         ]
+       }},
       # Start a worker by calling: Convoy.Worker.start_link(arg)
       # {Convoy.Worker, arg},
       # Start to serve requests, typically the last entry
