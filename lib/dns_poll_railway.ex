@@ -136,7 +136,7 @@ defmodule Convoy.DnsPollRailway do
 
     query
     |> resolver.()
-    |> Enum.reject(fn n -> !is_binary(n) end)
+    |> Enum.reject(fn n -> is_nil(n) end)
     |> Enum.map(&format_node(&1, node_basename))
     |> Enum.reject(fn n -> n == me end)
   end
