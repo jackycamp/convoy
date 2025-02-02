@@ -1,5 +1,22 @@
 # Convoy
 
+This project demonstrates how one might achieve elixir node clustering on Railway's infrastructure.
+Both manually and automatically through node discovery and internal dns queries.
+
+I've cooked up a basic UI that renders some elixir "shells". Consider them virtual shells
+for the elixir nodes in our Railway environment and all on the same private internal network.
+
+Below, we're manually connecting the nodes using `Node.connect/1`.
+
+[Manually connecting elixir nodes](https://youtu.be/JZABhEIZkko)
+
+And here, we spin up some new nodes, wait for them to deploy,
+and see them connect automatically!!
+
+[Elixir nodes connected auto-discover](https://youtu.be/JZABhEIZkko)
+
+## Setting up the project
+
 First, set some env vars:
 
 ```bash
