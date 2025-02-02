@@ -156,12 +156,22 @@ defmodule Convoy.DnsPollRailway do
   end
 
   defp lookup_all_names(q) do
-    Enum.flat_map([:a, :aaaa], fn t ->
-      {:ok, {:hostent, name, _, _, _, _}} = :inet_res.getbyname(q, :in, t)
-      IO.puts("got name: #{name}")
-      # [to_string(name)]
-      to_string(name)
-    end)
+    case :inet_res.getbyname(q, :aaaa) do
+      {:ok, {:hostent, name, _, _, _, _}} ->
+        IO.puts("got name: #{name}")
+        to_string(name)
+
+      {:error, reason} ->
+        IO.puts("get by name failed: #{inspect(reason)}")
+        ""
+    end
+
+    # Enum.flat_map([:a, :aaaa], fn t ->
+    #   {:ok, {:hostent, name, _, _, _, _}} = :inet_res.getbyname(q, :in, t)
+    #   IO.puts("got name: #{name}")
+    #   # [to_string(name)]
+    #   to_string(name)
+    # end)
   end
 
   def lookup_all_ips(q) do
