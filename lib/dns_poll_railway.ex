@@ -55,10 +55,11 @@ defmodule Convoy.DnsPollRailway do
          } = state
        ) do
     new_nodelist = state |> get_nodes() |> MapSet.new()
+    IO.puts("0 new nodelist: #{inspect(new_nodelist)}")
     removed = MapSet.difference(state.meta, new_nodelist)
-
+    IO.puts("removed: #{inspect(removed)}")
     # new_nodelist = MapSet.new([:"convoy@convoy.railway.internal"])
-    IO.puts("new nodelist: #{inspect(new_nodelist)}")
+    IO.puts("1 new nodelist: #{inspect(new_nodelist)}")
 
     new_nodelist =
       case Strategy.disconnect_nodes(
