@@ -56,27 +56,8 @@ defmodule Convoy.DnsPollRailway do
            list_nodes: list_nodes
          } = state
        ) do
-    info(topology, "doing poll")
     new_nodelist = state |> get_nodes() |> MapSet.new()
-    info(topology, "new nodes: #{inspect(new_nodelist)}")
     removed = MapSet.difference(state.meta, new_nodelist)
-
-    new_nodelist =
-      MapSet.new([
-        :"convoy@convoy.railway.internal",
-        :"convoy@convoy-eada.railway.internal",
-        :"convoy@convoy-az7s.railway.internal"
-      ])
-
-    IO.puts("hardcoded node list: #{inspect(new_nodelist)}")
-
-    {:ok, q} = Keyword.fetch(state.config, :query)
-    info(topology, "q: #{inspect(q)}")
-    as_charlist = String.to_charlist(q)
-    info(topology, "as charlist: #{inspect(as_charlist)}")
-
-    all = lookup_all_ips(String.to_charlist(q))
-    info(topology, "all: #{inspect(all)}")
 
     new_nodelist =
       case Strategy.disconnect_nodes(
@@ -112,8 +93,6 @@ defmodule Convoy.DnsPollRailway do
           end)
       end
 
-    info(topology, "new nodes now?: #{inspect(new_nodelist)}")
-
     Process.send_after(self(), :poll, polling_interval(state))
 
     %{state | :meta => new_nodelist}
@@ -142,10 +121,7 @@ defmodule Convoy.DnsPollRailway do
   # filter out me
   defp resolve({:ok, query}, {:ok, node_basename}, resolver, %State{topology: topology})
        when is_binary(query) and is_binary(node_basename) and query != "" and node_basename != "" do
-    info(topology, "polling dns for '#{query}'")
     me = node()
-
-    IO.puts("in resolve, me: #{inspect(me)}")
 
     query
     |> resolver.()
