@@ -38,8 +38,6 @@ defmodule Convoy.DnsPollRailway do
   end
 
   def init([%State{} = state]) do
-    info(state.topology, "why is dns so hard")
-
     {:ok, do_poll(state)}
   end
 
@@ -59,7 +57,8 @@ defmodule Convoy.DnsPollRailway do
     new_nodelist = state |> get_nodes() |> MapSet.new()
     removed = MapSet.difference(state.meta, new_nodelist)
 
-    new_nodelist = MapSet.new([:"convoy@convoy.railway.internal"])
+    # new_nodelist = MapSet.new([:"convoy@convoy.railway.internal"])
+    IO.puts("new nodelist: #{inspect(new_nodelist)}")
 
     new_nodelist =
       case Strategy.disconnect_nodes(
@@ -78,6 +77,8 @@ defmodule Convoy.DnsPollRailway do
           end)
       end
 
+    IO.puts("nodelist to connect: #{inspect(new_nodelist)}")
+
     new_nodelist =
       case Strategy.connect_nodes(
              topology,
@@ -95,6 +96,7 @@ defmodule Convoy.DnsPollRailway do
           end)
       end
 
+    IO.puts("final nodelist: #{inspect(new_nodelist)}")
     Process.send_after(self(), :poll, polling_interval(state))
 
     %{state | :meta => new_nodelist}
@@ -108,11 +110,17 @@ defmodule Convoy.DnsPollRailway do
     query = Keyword.fetch(config, :query)
     node_basename = Keyword.fetch(config, :node_basename)
 
+    # resolver =
+    #   Keyword.get(config, :resolver, fn query ->
+    #     query
+    #     |> String.to_charlist()
+    #     |> lookup_all_ips
+    #   end)
     resolver =
       Keyword.get(config, :resolver, fn query ->
         query
         |> String.to_charlist()
-        |> lookup_all_ips
+        |> lookup_all_names()
       end)
 
     resolve(query, node_basename, resolver, state)
@@ -136,19 +144,22 @@ defmodule Convoy.DnsPollRailway do
        }) do
     warn(
       topology,
-      "dns polling strategy is selected, but query or basename param is invalid: #{inspect(%{query: invalid_query, node_basename: invalid_basename})}"
+      "dns polling selected, but query or basename is invalid: #{inspect(%{query: invalid_query, node_basename: invalid_basename})}"
     )
 
     []
   end
 
   defp resolve(:error, :error, _resolver, %State{topology: topology}) do
-    warn(
-      topology,
-      "dns polling strategy is selected, but query and basename params missed"
-    )
-
+    warn(topology, "dns polling strategy is selected, but query and basename params missed")
     []
+  end
+
+  defp lookup_all_names(q) do
+    Enum.flat_map([:a, :aaaa], fn t ->
+      {:ok, {:hostent, name, _, _, _, _}} = :inet_res.getbyname(q, :in, t)
+      [to_string(name)]
+    end)
   end
 
   def lookup_all_ips(q) do
