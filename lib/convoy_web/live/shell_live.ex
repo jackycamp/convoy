@@ -145,7 +145,7 @@ defmodule ConvoyWeb.ShellLive do
 
     result =
       if is_remote_node(node.name) do
-        internal_dns = "https://#{node.name}.railway.internal:4000/api/cmd"
+        internal_dns = "http://#{node.name}.railway.internal:4000/api/cmd"
         Utils.run_remote_cmd(internal_dns, value)
       else
         Utils.run_local_cmd(value)
