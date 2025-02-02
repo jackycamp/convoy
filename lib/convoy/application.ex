@@ -8,8 +8,8 @@ defmodule Convoy.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # {Cluster.Supervisor,
-      #  [Application.get_env(:libcluster, :topologies), [name: Convoy.ClusterSupervisor]]},
+      {Cluster.Supervisor,
+       [Application.get_env(:libcluster, :topologies), [name: Convoy.ClusterSupervisor]]},
       ConvoyWeb.Telemetry,
       {Phoenix.PubSub, name: Convoy.PubSub},
       # Start the Finch HTTP client for sending emails
