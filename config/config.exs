@@ -65,7 +65,8 @@ config :libcluster,
   topologies: [
     convoy_topology: [
       # ref: https://hexdocs.pm/libcluster/Cluster.Strategy.DNSPoll.html#content
-      strategy: Cluster.Strategy.DNSPoll,
+      # strategy: Cluster.Strategy.DNSPoll,
+      strategy: Convoy.DnsPollRailway,
       config: [
         polling_interval: 5_000,
         query: query,
