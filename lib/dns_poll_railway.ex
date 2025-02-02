@@ -135,6 +135,7 @@ defmodule Convoy.DnsPollRailway do
 
     query
     |> resolver.()
+    |> Enum.reject(fn n -> !is_binary(n) end)
     |> Enum.map(&format_node(&1, node_basename))
     |> Enum.reject(fn n -> n == me end)
   end
@@ -159,19 +160,12 @@ defmodule Convoy.DnsPollRailway do
     case :inet_res.getbyname(q, :aaaa) do
       {:ok, {:hostent, name, _, _, _, _}} ->
         IO.puts("got name: #{name}")
-        to_string(name)
+        [name]
 
       {:error, reason} ->
         IO.puts("get by name failed: #{inspect(reason)}")
-        ""
+        [nil]
     end
-
-    # Enum.flat_map([:a, :aaaa], fn t ->
-    #   {:ok, {:hostent, name, _, _, _, _}} = :inet_res.getbyname(q, :in, t)
-    #   IO.puts("got name: #{name}")
-    #   # [to_string(name)]
-    #   to_string(name)
-    # end)
   end
 
   def lookup_all_ips(q) do
@@ -180,5 +174,9 @@ defmodule Convoy.DnsPollRailway do
 
   # turn an ip into a node name atom, assuming that all other node names looks similar to our own name
   # defp format_node(ip, base_name), do: :"#{base_name}@#{:inet_parse.ntoa(ip)}"
-  defp format_node(dns_name, base_name), do: :"#{base_name}@#{dns_name}"
+  # defp format_node(dns_name, base_name), do: :"#{base_name}@#{dns_name}"
+  defp format_node(dns_name, base_name) do
+    IO.puts("formatting node: #{dns_name}, #{base_name}")
+    :"#{base_name}@#{dns_name}"
+  end
 end
