@@ -152,7 +152,8 @@ defmodule Convoy.Railway do
           "RELEASE_NODE" => "convoy@#{name}.railway.internal",
           "SECRET_KEY_BASE" => "#{gen_secret_key()}",
           "RAILWAY_API_URL" => "#{Application.get_env(:convoy, :railway_url)}",
-          "RAILWAY_TOKEN" => "#{Application.get_env(:convoy, :railway_token)}"
+          "RAILWAY_TOKEN" => "#{Application.get_env(:convoy, :railway_token)}",
+          "ECTO_IPV6" => "true"
         }
       }
     }
