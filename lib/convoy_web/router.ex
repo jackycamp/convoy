@@ -20,10 +20,11 @@ defmodule ConvoyWeb.Router do
     live "/", ConsoleLive
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", ConvoyWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", ConvoyWeb do
+    pipe_through :api
+
+    post "/cmd", ShellController, :cmd
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:convoy, :dev_routes) do
