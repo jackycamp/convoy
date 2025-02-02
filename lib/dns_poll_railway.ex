@@ -158,7 +158,9 @@ defmodule Convoy.DnsPollRailway do
   defp lookup_all_names(q) do
     Enum.flat_map([:a, :aaaa], fn t ->
       {:ok, {:hostent, name, _, _, _, _}} = :inet_res.getbyname(q, :in, t)
-      [to_string(name)]
+      IO.puts("got name: #{name}")
+      # [to_string(name)]
+      to_string(name)
     end)
   end
 
@@ -167,5 +169,6 @@ defmodule Convoy.DnsPollRailway do
   end
 
   # turn an ip into a node name atom, assuming that all other node names looks similar to our own name
-  defp format_node(ip, base_name), do: :"#{base_name}@#{:inet_parse.ntoa(ip)}"
+  # defp format_node(ip, base_name), do: :"#{base_name}@#{:inet_parse.ntoa(ip)}"
+  defp format_node(dns_name, base_name), do: :"#{base_name}@#{dns_name}"
 end
