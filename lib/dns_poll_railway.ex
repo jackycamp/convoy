@@ -61,8 +61,8 @@ defmodule Convoy.DnsPollRailway do
     info(topology, "new nodes: #{inspect(new_nodelist)}")
     removed = MapSet.difference(state.meta, new_nodelist)
 
-    new_nodelist =
-      MapSet.new([:"convoy@convoy-k6kr.railway.internal", :"convoy@convoy-exqf.railway.internal"])
+    # new_nodelist =
+    #   MapSet.new([:"convoy@convoy-k6kr.railway.internal", :"convoy@convoy-exqf.railway.internal"])
 
     {:ok, q} = Keyword.fetch(state.config, :query)
     info(topology, "q: #{inspect(q)}")
