@@ -2,27 +2,22 @@ defmodule ConvoyWeb.ShellLive do
   use ConvoyWeb, :live_view
   alias Phoenix.LiveView.JS
   alias Convoy.Railway
+  alias Convoy.Utils
   require Logger
-
-  @unsafe_terms [
-    # "System",
-    # "File",
-    # "Port",
-    # "spawn",
-    # "Process"
-    # "cookie",
-    # "env"
-  ]
 
   @impl true
   def render(assigns) do
     ~H"""
     <div
-      class="text-white bg-black rounded-lg w-[30rem] h-96 font-mono text-sm xl:text-lg shadow-2xl overflow-y-auto"
+      class="text-white bg-black rounded-lg w-[80vw] sm:w-[36rem] font-mono text-sm xl:text-lg shadow-2xl"
       phx-click={JS.focus(to: "#node-shell-#{@node.name}-cmd-#{length(@history)}-input")}
     >
-      <div class="flex justify-between text-sm bg-[#343639] py-2 px-2 mb-2">
-        <div>{@node.name}</div>
+      <!-- static top shell bar (showing name and actions) -->
+      <div class="flex justify-between text-sm bg-[#343639] py-2 px-2 mb-2 rounded-t-lg">
+        <div class="flex gap-1 items-center">
+          <p class={if @is_remote?, do: "text-white", else: "text-cornflowerblue"}>{@node.name}</p>
+          <p :if={@is_remote?} class="text-xs text-gray-500">(remote)</p>
+        </div>
         <div
           :if={!@node.control_plane? && @node.status == "SUCCESS"}
           phx-click="del_node"
@@ -31,31 +26,42 @@ defmodule ConvoyWeb.ShellLive do
           <.icon name="hero-power" class="h-5" />
         </div>
         <div :if={@node.status == "deleting"}>
-          <.icon name="hero-face-frown" class="h-5 animate-spin" />
+          <.icon name="hero-arrow-path" class="h-5 animate-spin" />
         </div>
       </div>
-      <%= for {{cmd, res}, index} <- Enum.with_index(@history) do %>
-        <div class="px-2">
-          <div class="flex items-center gap-2">
-            <p class="text-white">iex({index})></p>
-            <p class="text-white">{cmd}</p>
+      
+    <!-- main shell content, scrolls vertically -->
+      <div class="h-72 sm:h-96 overflow-y-auto">
+        <!-- history of commands -->
+        <%= for {{cmd, res}, index} <- Enum.with_index(@history) do %>
+          <div class="px-2">
+            <div class="flex items-center gap-2">
+              <p class="text-white">iex({index})></p>
+              <p class="text-white">{cmd}</p>
+            </div>
+            <p class={if String.contains?(res, "Error"), do: "text-red-500", else: "text-white"}>
+              {res}
+            </p>
           </div>
-          <p class={if String.contains?(res, "Error"), do: "text-red-500", else: "text-white"}>
-            {res}
-          </p>
+        <% end %>
+        
+    <!-- current shell input -->
+        <div
+          :if={@node.status == "SUCCESS"}
+          phx-hook="UseFocus"
+          id={"node-shell-#{@node.name}-cmd-container"}
+          class="flex items-center gap-2 px-2"
+        >
+          <p class="text-white">iex({length(@history)})></p>
+          <.shell_input
+            id={"node-shell-#{@node.name}-cmd-#{length(@history)}-input"}
+            value={@curr_command}
+            onchange="check_cmd"
+          />
         </div>
-      <% end %>
-
-      <div :if={@node.status == "SUCCESS"} class="flex items-center gap-2 px-2">
-        <p class="text-white">iex({length(@history)})></p>
-        <.shell_input
-          id={"node-shell-#{@node.name}-cmd-#{length(@history)}-input"}
-          value={@curr_command}
-          onchange="check_cmd"
-        />
-      </div>
-      <div :if={@node.status != "SUCCESS"} class="flex items-center gap-2 px-2">
-        <p class="text-gray-500">{@node.status}</p>
+        <div :if={@node.status != "SUCCESS"} class="flex items-center gap-2 px-2">
+          <p class="text-gray-500">{@node.status}</p>
+        </div>
       </div>
     </div>
     """
@@ -73,36 +79,28 @@ defmodule ConvoyWeb.ShellLive do
      assign(socket,
        node: node,
        curr_command: "",
-       history: []
+       history: [],
+       is_remote?: is_remote_node(node.name)
      )}
   end
 
   @impl true
   def handle_event("check_cmd", %{"key" => key, "value" => value}, socket) do
-    if key == "Enter" do
-      node = socket.assigns.node
-      Logger.info("this node: #{Node.self()}")
-      Logger.info("name: #{node.name}")
+    case key do
+      "Enter" ->
+        socket = run_cmd(socket, value)
+        %{node: node, history: history} = socket.assigns
+        selector = "node-shell-#{node.name}-cmd-#{length(history)}-input"
+        {:noreply, push_event(socket, "focus", %{selector: selector})}
 
-      # TODO: if node.self corresponds to node.name than
-      # we eval that command. otherwise we broadcast the cmd 
-      # as a message to the proper node
+      "ArrowUp" ->
+        socket = load_last_cmd(socket)
+        %{node: node, history: history, curr_command: curr_command} = socket.assigns
+        selector = "node-shell-#{node.name}-cmd-#{length(history)}-input"
+        {:noreply, push_event(socket, "set_value", %{selector: selector, value: curr_command})}
 
-      result =
-        try do
-          Logger.info("raw cmd: #{value}")
-          {val, binding} = Code.eval_string(check_unsafe_cmd(value))
-          Logger.info("result: #{inspect(val)}")
-          Logger.info("binding: #{inspect(binding)}")
-          inspect(val)
-        rescue
-          e -> "Error: #{Exception.message(e)}"
-        end
-
-      history = socket.assigns.history ++ [{value, result}]
-      {:noreply, assign(socket, curr_command: "", history: history)}
-    else
-      {:noreply, assign(socket, curr_command: value)}
+      _ ->
+        {:noreply, assign(socket, curr_command: value)}
     end
   end
 
@@ -142,13 +140,39 @@ defmodule ConvoyWeb.ShellLive do
     {:noreply, socket}
   end
 
-  # Some really basic unsafe command checking.
-  # Still highly insecure. But could be worse!
-  defp check_unsafe_cmd(cmd) when is_binary(cmd) do
-    if String.contains?(cmd, @unsafe_terms) do
-      raise "Command not permitted"
-    else
-      cmd
+  defp run_cmd(socket, value) do
+    node = socket.assigns.node
+
+    result =
+      if is_remote_node(node.name) do
+        internal_dns = "https://#{node.name}.railway.internal:4000/api/cmd"
+        Utils.run_remote_cmd(internal_dns, value)
+      else
+        Utils.run_local_cmd(value)
+      end
+
+    history = socket.assigns.history ++ [{value, result}]
+    assign(socket, curr_command: "", history: history)
+  end
+
+  defp load_last_cmd(socket) do
+    %{history: history} = socket.assigns
+
+    case List.last(history) do
+      {last_cmd, _} ->
+        IO.puts("got last command: #{last_cmd}")
+        assign(socket, curr_command: last_cmd)
+
+      nil ->
+        assign(socket, curr_command: "")
     end
+  end
+
+  defp is_remote_node(node_name) do
+    self = "#{Node.self()}"
+    node_with_railway = "#{node_name}@#{node_name}.railway.internal"
+    node_with_local = "#{node_name}@#{node_name}.local"
+
+    self != node_with_railway && self != node_with_local
   end
 end

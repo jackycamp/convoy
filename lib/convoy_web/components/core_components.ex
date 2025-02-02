@@ -687,9 +687,12 @@ defmodule ConvoyWeb.CoreComponents do
       value={@value}
       phx-keyup={@onchange}
       phx-autofocus
+      autocomplete="off"
+      spellcheck="false"
       class={[
-        "block w-full bg-black text-white focus:ring-0 focus:outline-none sm:leading-6"
+        "block w-full whitespace-normal break-words bg-black text-white focus:ring-0 focus:outline-none sm:leading-6"
       ]}
+      style="white-space: pre-wrap; word-wrap: break-word;"
     />
     """
   end
