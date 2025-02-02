@@ -64,9 +64,11 @@ defmodule Convoy.DnsPollRailway do
     new_nodelist =
       MapSet.new([
         :"convoy@convoy.railway.internal",
-        :"convoy@convoy-k6kr.railway.internal",
-        :"convoy@convoy-exqf.railway.internal"
+        :"convoy@convoy-eada.railway.internal",
+        :"convoy@convoy-az7s.railway.internal"
       ])
+
+    IO.puts("hardcoded node list: #{inspect(new_nodelist)}")
 
     {:ok, q} = Keyword.fetch(state.config, :query)
     info(topology, "q: #{inspect(q)}")
@@ -142,6 +144,8 @@ defmodule Convoy.DnsPollRailway do
        when is_binary(query) and is_binary(node_basename) and query != "" and node_basename != "" do
     info(topology, "polling dns for '#{query}'")
     me = node()
+
+    IO.puts("in resolve, me: #{inspect(me)}")
 
     query
     |> resolver.()
