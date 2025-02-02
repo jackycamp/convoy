@@ -1,8 +1,17 @@
 defmodule Convoy.DnsPollRailway do
   @moduledoc """
-  Assumes you have nodes that respond to the specified DNS query (A record), and which follow the node name pattern of
-  `<name>@<ip-address>`. If your setup matches those assumptions, this strategy will periodically poll DNS and connect
-  all nodes it finds.
+  A duped and slightly modified DNS polling strategy.
+  Originally, DNSPoll was performing lookups that returned ip's
+  but we want dns names as these are easier to know ahead of time 
+  and given to you by Railway's internal private network for free.
+
+  So instead of trying to connect nodes using: `<node_basename>@<ip-address>`
+  we use `<node_basename>@<node_dns_name>`.
+
+  For this specific project, we are looking for `convoy@convoy.railway.internal`.
+
+  Checking out Cluster.Strategy.DNSPoll in the libcluster project
+  is encouraged.
 
   ## Options
 
@@ -55,11 +64,12 @@ defmodule Convoy.DnsPollRailway do
          } = state
        ) do
     new_nodelist = state |> get_nodes() |> MapSet.new()
-    IO.puts("0 new nodelist: #{inspect(new_nodelist)}")
     removed = MapSet.difference(state.meta, new_nodelist)
-    IO.puts("removed: #{inspect(removed)}")
+
+    # Having trouble connecting your nodes? Or node discovery?
+    # you may want to try hardcoding nodelist to see if you can
+    # get it to force connect. e.g.
     # new_nodelist = MapSet.new([:"convoy@convoy.railway.internal"])
-    IO.puts("1 new nodelist: #{inspect(new_nodelist)}")
 
     new_nodelist =
       case Strategy.disconnect_nodes(
@@ -78,8 +88,6 @@ defmodule Convoy.DnsPollRailway do
           end)
       end
 
-    IO.puts("nodelist to connect: #{inspect(new_nodelist)}")
-
     new_nodelist =
       case Strategy.connect_nodes(
              topology,
@@ -97,7 +105,6 @@ defmodule Convoy.DnsPollRailway do
           end)
       end
 
-    IO.puts("final nodelist: #{inspect(new_nodelist)}")
     Process.send_after(self(), :poll, polling_interval(state))
 
     %{state | :meta => new_nodelist}
@@ -111,12 +118,6 @@ defmodule Convoy.DnsPollRailway do
     query = Keyword.fetch(config, :query)
     node_basename = Keyword.fetch(config, :node_basename)
 
-    # resolver =
-    #   Keyword.get(config, :resolver, fn query ->
-    #     query
-    #     |> String.to_charlist()
-    #     |> lookup_all_ips
-    #   end)
     resolver =
       Keyword.get(config, :resolver, fn query ->
         query
@@ -127,10 +128,7 @@ defmodule Convoy.DnsPollRailway do
     resolve(query, node_basename, resolver, state)
   end
 
-  # query for all ips responding to a given dns query
-  # format ips as node names
-  # filter out me
-  defp resolve({:ok, query}, {:ok, node_basename}, resolver, %State{topology: topology})
+  defp resolve({:ok, query}, {:ok, node_basename}, resolver, _state)
        when is_binary(query) and is_binary(node_basename) and query != "" and node_basename != "" do
     me = node()
 
@@ -141,43 +139,34 @@ defmodule Convoy.DnsPollRailway do
     |> Enum.reject(fn n -> n == me end)
   end
 
-  defp resolve({:ok, invalid_query}, {:ok, invalid_basename}, _resolver, %State{
-         topology: topology
-       }) do
-    warn(
-      topology,
-      "dns polling selected, but query or basename is invalid: #{inspect(%{query: invalid_query, node_basename: invalid_basename})}"
-    )
-
+  defp resolve({:ok, invalid_query}, {:ok, invalid_basename}, _resolver, %State{topology: t}) do
+    msg = "#{inspect(%{query: invalid_query, node_basename: invalid_basename})}"
+    warn(t, "dns polling selected, but query or basename is invalid: #{msg}")
     []
   end
 
-  defp resolve(:error, :error, _resolver, %State{topology: topology}) do
-    warn(topology, "dns polling strategy is selected, but query and basename params missed")
+  defp resolve(:error, :error, _resolver, %State{topology: t}) do
+    warn(t, "dns polling strategy is selected, but query and basename params missed")
     []
   end
 
   defp lookup_all_names(q) do
     case :inet_res.getbyname(q, :aaaa) do
       {:ok, {:hostent, name, _, _, _, _}} ->
-        IO.puts("got name: #{name}")
         [name]
 
       {:error, reason} ->
-        IO.puts("get by name failed: #{inspect(reason)}")
+        IO.warn("failed to get by name: #{inspect(reason)}")
         [nil]
     end
   end
 
+  # This function is unused now
   def lookup_all_ips(q) do
     Enum.flat_map([:a, :aaaa], fn t -> :inet_res.lookup(q, :in, t) end)
   end
 
   # turn an ip into a node name atom, assuming that all other node names looks similar to our own name
   # defp format_node(ip, base_name), do: :"#{base_name}@#{:inet_parse.ntoa(ip)}"
-  # defp format_node(dns_name, base_name), do: :"#{base_name}@#{dns_name}"
-  defp format_node(dns_name, base_name) do
-    IO.puts("formatting node: #{dns_name}, #{base_name}")
-    :"#{base_name}@#{dns_name}"
-  end
+  defp format_node(dns_name, base_name), do: :"#{base_name}@#{dns_name}"
 end
