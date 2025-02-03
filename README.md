@@ -131,9 +131,9 @@ RELEASE_NODE=convoy@convoy.railway.internal
 ## Docker
 
 ```bash
-sudo docker build -t convoy:debug .
 # build and spin it up locally
 # note, you'll have to generate a secret key first
+sudo docker build -t convoy:debug .
 mix phx.gen.secret
 
 sudo docker run \
@@ -141,8 +141,4 @@ sudo docker run \
 -e PHX_HOST=localhost \
 -p4000:4000 \
 convoy:debug
-```
-
-```
-
 ```
