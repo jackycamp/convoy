@@ -677,8 +677,6 @@ defmodule ConvoyWeb.CoreComponents do
   attr :id, :string, required: true
   attr :value, :string, default: ""
   attr :onchange, :any, default: nil
-  # phx-autofocus
-  # phx-mounted={JS.focus(to: "##{@id}")}
 
   def shell_input(assigns) do
     ~H"""
