@@ -110,7 +110,7 @@ internal private network only supports ipv6.
 
 If only these environment variables are set, nodes should be able to communicate. But you will have to manually connect them using `Node.connect/1` e.g. `Node.connect(:"convoy@convoy.railway.internal")`.
 
-### Elixir Node Auto-Discovery on Railway\*\*
+### Elixir Node Auto-Discovery on Railway
 
 It'd be cooler if the nodes automatically connect when you spin them up. Utilizing `libcluster` and our own custom dns strategy they can!
 
