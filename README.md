@@ -10,14 +10,59 @@ Below, we're manually connecting the nodes using `Node.connect/1`.
 
 https://github.com/user-attachments/assets/458797d5-807a-46cb-b6c1-1de4309d1f97
 
-[manual node connect on yt](https://youtu.be/JZABhEIZkko)
+[or check it out on yt](https://youtu.be/JZABhEIZkko)
 
 And here, we spin up some new nodes, wait for them to deploy,
 and see them connect automatically!!
 
 https://github.com/user-attachments/assets/ab1a363f-d636-4fc2-b706-11c24f6ff363
 
-[elixir nodes autodiscover on yt](https://youtu.be/JZABhEIZkko)
+[also on yt](https://youtu.be/JZABhEIZkko)
+
+## Limitations and room for Improvement
+
+some parts of the "terminal" behave pretty weird, not how you would expect
+a normal terminal to operate, particularly line wrapping for longer commands.
+
+security lol
+
+executing commands on
+
+## Modules of interest
+
+**ConvoyWeb.ConsoleLive**
+
+`lib/convoy_web/live/console_live.ex`
+
+The Phoenix LiveView that is the entry point of the app. Allows one
+to spin up and spin down elixir nodes, and interact with their shells, in a railway environment.
+
+**ConvoyWeb.ShellLive**
+
+`lib/convoy_web/live/shell_live.ex`
+
+The Phoenix LiveView that emulates a "shell" for the corresponding
+elixir node. The commands you run in the shell execute on the
+node itself. All stdout/stderr messages you see are directly from
+that node.
+
+**Convoy.Railway**
+
+`lib/convoy/live/railway.ex`
+
+The module that interacts with the Railway environment.
+Performs the graphql queries and mutations to manage
+nodes and services in the environment.
+
+**Convoy.DnsPollRailway**
+
+`lib/dns_poll_railway.ex`
+
+The custom, Railway specific, clustering/node discovery
+strategy. Allows for auto-discovery and joining of elixir nodes
+to the cluster. Literally duped from libcluster's `DNSPoll` strategy
+and modified for more debug logging and resolving to dns names not
+ip's.
 
 ## Setting up the project
 
@@ -28,14 +73,12 @@ export RAILWAY_API_URL=redacted
 export RAILWAY_TOKEN=redacted
 ```
 
-To start your Phoenix server:
+To start the app:
 
 - Run `mix setup` to install and setup dependencies
 - Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
-
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
 ## Cluster stuff
 
@@ -73,6 +116,7 @@ RELEASE_NODE=convoy@convoy.railway.internal
 ## Docker
 
 ```bash
+sudo docker build -t convoy:debug .
 # build and spin it up locally
 # note, you'll have to generate a secret key first
 mix phx.gen.secret
@@ -83,30 +127,3 @@ sudo docker run \
 -p4000:4000 \
 convoy:debug
 ```
-
-For more information about deploying with Docker see
-https://hexdocs.pm/phoenix/releases.html#containers
-
-Here are some useful release commands you can run in any release environment:
-
-    # To build a release
-    mix release
-
-    # To start your system with the Phoenix server running
-    _build/dev/rel/convoy/bin/server
-
-Once the release is running you can connect to it remotely:
-
-    _build/dev/rel/convoy/bin/convoy remote
-
-To list all commands:
-
-    _build/dev/rel/convoy/bin/convoy
-
-## Learn more
-
-- Official website: https://www.phoenixframework.org/
-- Guides: https://hexdocs.pm/phoenix/overview.html
-- Docs: https://hexdocs.pm/phoenix
-- Forum: https://elixirforum.com/c/phoenix-forum
-- Source: https://github.com/phoenixframework/phoenix
