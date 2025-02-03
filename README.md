@@ -19,15 +19,6 @@ https://github.com/user-attachments/assets/ab1a363f-d636-4fc2-b706-11c24f6ff363
 
 [also on yt](https://youtu.be/JZABhEIZkko)
 
-## Limitations and room for Improvement
-
-some parts of the "terminal" behave pretty weird, not how you would expect
-a normal terminal to operate, particularly line wrapping for longer commands.
-
-security lol
-
-executing commands on
-
 ## Modules of interest
 
 **ConvoyWeb.ConsoleLive**
@@ -63,6 +54,19 @@ strategy. Allows for auto-discovery and joining of elixir nodes
 to the cluster. Literally duped from libcluster's `DNSPoll` strategy
 and modified for more debug logging and resolving to dns names not
 ip's.
+
+## Limitations and room for improvement
+
+Some parts of the "terminal" behave pretty weird, not how you would expect
+a normal terminal to operate, particularly line wrapping for longer commands,
+retrieving the last nth command, etc.
+
+Each shell literally gives "shell" access to the node allowing for
+system commands potentially compromising the node. A little more work
+could go into locking it down.
+
+Realtime/collaborative/multi-client shells possible with a little more work. Right now, only
+one client is supported at a time.
 
 ## Setting up the project
 
