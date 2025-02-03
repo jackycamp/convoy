@@ -1,18 +1,18 @@
 # Convoy
 
-This project demonstrates how one might achieve elixir node clustering on Railway's infrastructure.
-Both manually and automatically through node discovery and internal dns queries.
+This project demonstrates how one can achieve elixir node clustering on Railway's infrastructure
+both manually and automatically through node discovery and internal dns queries.
 
 I've cooked up a basic UI that renders some elixir "shells". Consider them virtual shells
 for the elixir nodes in our Railway environment and all on the same private internal network.
 
-Below, we're manually connecting the nodes using `Node.connect/1`.
+In the clip below, we're manually connecting the nodes using `Node.connect/1`.
 
 https://github.com/user-attachments/assets/458797d5-807a-46cb-b6c1-1de4309d1f97
 
 [or check it out on yt](https://youtu.be/JZABhEIZkko)
 
-And here, we spin up some new nodes, wait for them to deploy,
+And in this clip, we spin up some new nodes, wait for them to deploy,
 and see them connect automatically!!
 
 https://github.com/user-attachments/assets/ab1a363f-d636-4fc2-b706-11c24f6ff363
@@ -54,19 +54,6 @@ strategy. Allows for auto-discovery and joining of elixir nodes
 to the cluster. Literally duped from libcluster's `DNSPoll` strategy
 and modified for more debug logging and resolving to dns names not
 ip's.
-
-## Limitations and room for improvement
-
-Some parts of the "terminal" behave pretty weird, not how you would expect
-a normal terminal to operate, particularly line wrapping for longer commands,
-retrieving the last nth command, etc.
-
-Each shell literally gives "shell" access to the node allowing for
-system commands potentially compromising the node. A little more work
-could go into locking it down.
-
-Realtime/collaborative/multi-client shells possible with a little more work. Right now, only
-one client is supported at a time.
 
 ## Setting up the project
 
@@ -125,7 +112,7 @@ If only these environment variables are set, nodes should be able to communicate
 
 **Elixir Node Auto-Discovery on Railway**
 
-It'd be cooler if the nodes just automatically connect when you spin them up. Utilizing `libcluster` and our own custom dns strategy they can!
+It'd be cooler if the nodes automatically connect when you spin them up. Utilizing `libcluster` and our own custom dns strategy they can!
 
 Put this `libcluster` config in your `config.exs`:
 
@@ -179,6 +166,19 @@ iex(convoy3@convoy.local)5> send({Convoy.ConvoyWorker, :"convoy1@convoy.local"},
 # then on convoy1 you should see
 Received ping on node convoy1@convoy.local
 ```
+
+## Limitations and room for improvement
+
+Some parts of the "terminal" behave pretty weird, not how you would expect
+a normal terminal to operate, particularly line wrapping for longer commands,
+retrieving the last nth command, etc.
+
+Each shell literally gives "shell" access to the node allowing for
+system commands potentially compromising the node. A little more work
+could go into locking it down.
+
+Realtime/collaborative/multi-client shells possible with a little more work. Right now, only
+one client is supported at a time.
 
 ## Docker
 
