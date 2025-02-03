@@ -1,6 +1,6 @@
 # Convoy
 
-This project demonstrates how one can achieve elixir node clustering on Railway's infrastructure
+This repo demonstrates how one can achieve elixir node clustering on Railway's infrastructure
 both manually and automatically through node discovery and internal dns queries.
 
 I've cooked up a basic UI that renders some elixir "shells". Consider them virtual shells
@@ -106,7 +106,7 @@ A little bit more about the erlang flags:
 `-proto_dist inet6_tcp` forces erlang's distribution protocol to use ipv6. Railway's
 internal private network only supports ipv6.
 
-`-kernel inet_dist_listen_min 4444 inet_dist_listen_max 4444` ensures that distributed communication happens on a specific port. If not set a random high numbered port will be used which is not supported by railway's internal network. You must be explicit about the port.
+`-kernel inet_dist_listen_min 4444 inet_dist_listen_max 4444` ensures that inter-node distributed communication happens on a specific port. If not set a random high numbered port will be used which is not supported by railway's internal network. You must be explicit about the port.
 
 If only these environment variables are set, nodes should be able to communicate. But you will have to manually connect them using `Node.connect/1` e.g. `Node.connect(:"convoy@convoy.railway.internal")`.
 
@@ -138,6 +138,7 @@ Now, when you spin up nodes, you can just do `Node.list` on any node in the clus
 > Please keep in mind that `Convoy.DnsPollRailway` is not production ready as thorough testing has yet to be done. But it can be a good starting point and can be adjusted based on your needs.
 
 **Local Cluster**
+
 If you want to setup your local instance for manual clustering purposes you should:
 
 ```bash
