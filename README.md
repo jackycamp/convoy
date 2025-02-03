@@ -78,7 +78,7 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 ## Cluster stuff
 
-**Elixir Cluster on Railway**
+### Elixir Cluster on Railway
 
 There are a few extra steps needed to make sure that your elixir nodes can connect
 using the erlang port mapper daemon (EPMD) on Railway's private network.
@@ -110,7 +110,7 @@ internal private network only supports ipv6.
 
 If only these environment variables are set, nodes should be able to communicate. But you will have to manually connect them using `Node.connect/1` e.g. `Node.connect(:"convoy@convoy.railway.internal")`.
 
-**Elixir Node Auto-Discovery on Railway**
+### Elixir Node Auto-Discovery on Railway\*\*
 
 It'd be cooler if the nodes automatically connect when you spin them up. Utilizing `libcluster` and our own custom dns strategy they can!
 
@@ -137,7 +137,7 @@ Now, when you spin up nodes, you can just do `Node.list` on any node in the clus
 
 > Please keep in mind that `Convoy.DnsPollRailway` is not production ready as thorough testing has yet to be done. But it can be a good starting point and can be adjusted based on your needs.
 
-**Local Cluster**
+### Local Cluster
 
 If you want to setup your local instance for manual clustering purposes you should:
 
