@@ -1,9 +1,35 @@
 defmodule Convoy.Railway do
+  @moduledoc """
+  A module that lets you interact with a Railway environment.
+  Spin up nodes, monitor their deployment, and spin them down.
+
+  Note, this module is currently hard-coded to support my railway 
+  project/environment, could be easily changed.
+
+  Several functions are simply wrappers around graphql queries
+  that return:
+
+    {:ok, %Neuron.Response{status_code: status_code, body: body}}
+    {:error, reason}
+
+  Check the specific functon's doc for the structure of the body.
+  """
+
   require Logger
-  # hardcoded ftw
+  # like i said, hardcoded
   @project_id "2b31f950-2c62-40c0-ba7e-67b908a08687"
   @environment_id "7758cb1a-b746-41aa-88b6-a85d3a823bf1"
 
+  @doc """
+  Retrieves running nodes in the environment.
+  Returns a map where keys are node names 
+  and the values are `Convoy.Node` named structs.
+
+  ## Examples
+    
+      iex> Convoy.Railway.get_nodes()
+      %{"convoy-jdsk": %Convoy.Node{id: "convoy-jdsk", status: "SUCCESS" ...} }
+  """
   def get_nodes() do
     case get_service_instances() do
       {:ok, %Neuron.Response{status_code: 200, body: body}} ->
@@ -24,46 +50,57 @@ defmodule Convoy.Railway do
   end
 
   @doc """
-  Higher order fn used for launching nodes and monitoring their
-  status during the launch life cycle.
+  Give a name, launch a node in railway's environment.
+  Manages and broadcasts updates during the entire launch
+  cycle to the corresponding node channel topic.
 
-  TODO: finish doc
+  Below outlines the flow for launching a node.
 
   launch node
-  ├── service create
-  ├── service instance deploy
-  ├── get deployment with events
-      └── poll until deployment has status SUCCESS or FAILED 
-  └── 
+  ├── create railway service
+  ├── deploy the service instance
+  ├── deployment watcher
+  │     └── let railway build image, and take care of deployment
+  │     └── poll every 1.5s until deployment has status SUCCESS or FAILED 
+  │     └── broadcast to node channel informing status
+  └── node shell ready
+
+  This function doesn't return anything, it's intended to run
+  "in the background" and broadcast status messages.
+
+  ## Examples
+
+    iex> Convoy.Railway.launch_node("convoy-jdsk")
   """
   def launch_node(name) do
     case create_service(name) do
       {:ok, %Neuron.Response{status_code: 200, body: body}} ->
         edges = get_in(body, ["data", "serviceCreate", "serviceInstances", "edges"])
         instance = hd(edges)
-        Logger.info("instance: #{inspect(instance)}")
         service_id = get_in(instance, ["node", "serviceId"])
-        Logger.info("got service id!: #{service_id}")
         Convoy.NodePubsub.broadcast(name, {:load_instance_info, instance["node"]})
 
         case service_instance_deploy(service_id) do
           {:ok, %Neuron.Response{status_code: 200, body: body}} ->
             deployment_id = get_in(body, ["data", "serviceInstanceDeployV2"])
-            Logger.info("got deployment!: #{deployment_id}")
             Convoy.NodePubsub.broadcast(name, {:set_status, "starting deployment"})
             start_deployment_watcher(name, deployment_id)
 
           {:error, reason} ->
-            Logger.info("failed to deploy service instance: #{inspect(reason)}")
+            Logger.warn("failed to deploy service instance: #{inspect(reason)}")
             Convoy.NodePubsub.broadcast(name, {:set_status, "FAILED"})
         end
 
       {:error, reason} ->
-        Logger.info("failed to create service: #{inspect(reason)}")
+        Logger.warn("failed to create service: #{inspect(reason)}")
         Convoy.NodePubsub.broadcast(name, {:set_status, "FAILED"})
     end
   end
 
+  @doc """
+  Get your user account. Helpful for checking that
+  auth and queries are working properly.
+  """
   def me() do
     Neuron.query(
       """
@@ -82,6 +119,13 @@ defmodule Convoy.Railway do
     )
   end
 
+  @doc """
+  Retrieve the services in a project.
+
+  ## Examples
+
+    iex> Railway.get_services()
+  """
   def get_services() do
     Neuron.query(
       """
@@ -293,8 +337,6 @@ defmodule Convoy.Railway do
   defp start_deployment_watcher(name, deployment_id) do
     :timer.sleep(1500)
 
-    Logger.info("deployment watcher, checking status")
-
     case get_deployment_status(deployment_id) do
       :success ->
         Convoy.NodePubsub.broadcast(name, {:set_status, "SUCCESS"})
@@ -313,15 +355,12 @@ defmodule Convoy.Railway do
       {:ok, %Neuron.Response{status_code: 200, body: body}} ->
         case get_in(body, ["data", "deployment", "status"]) do
           "SUCCESS" ->
-            Logger.info("deployment success!!")
             :success
 
           "FAILED" ->
-            Logger.info("deployment failed. boo")
             :failed
 
           in_progress ->
-            Logger.info("deployment still in progress: #{in_progress}")
             {:in_progress, in_progress}
         end
 
