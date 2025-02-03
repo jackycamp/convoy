@@ -5,6 +5,8 @@ defmodule Convoy.DnsPollRailway do
   but we want dns names as these are easier to know ahead of time 
   and given to you by Railway's internal private network for free.
 
+  Simply, we use :inet_res.getbyname(query) instead of :inet_res.lookup(query).
+
   So instead of trying to connect nodes using: `<node_basename>@<ip-address>`
   we use `<node_basename>@<node_dns_name>`.
 
@@ -23,7 +25,7 @@ defmodule Convoy.DnsPollRailway do
 
       config :libcluster,
         topologies: [
-          dns_poll_example: [
+          my_topology_name: [
             strategy: #{__MODULE__},
             config: [
               polling_interval: 5_000,
