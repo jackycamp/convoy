@@ -70,7 +70,10 @@ one client is supported at a time.
 
 ## Setting up the project
 
-First, set some env vars:
+Assumes you have elixir and erlang installed. If you don't you can
+follow the [Phoenix installation instructions](https://hexdocs.pm/phoenix/installation.html), they explain how to get elixir/erlang setup.
+
+These env vars are required to start the project locally:
 
 ```bash
 export RAILWAY_API_URL=redacted
@@ -79,22 +82,27 @@ export RAILWAY_TOKEN=redacted
 
 To start the app:
 
-- Run `mix setup` to install and setup dependencies
-- Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+```bash
+mix deps.get # or you could do mix setup
+
+mix phx.server
+```
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 ## Cluster stuff
 
+If you want to setup your local instance for manual clustering purposes you should should:
+
 ```bash
 # add this to your /etc/hosts
 127.0.0.1   convoy.local
 
-# locally, with 3 separate shells open
-# must specify port as to not interfere with eachother
-PORT=4000 iex --name convoy1@convoy.local --cookie my_secret -S mix phx.server
-PORT=4001 iex --name convoy2@convoy.local --cookie my_secret -S mix phx.server
-PORT=4002 iex --name convoy3@convoy.local --cookie my_secret -S mix phx.server
+# start a node, specifying port, name, and cookie
+PORT=4000 iex --name convoy@convoy.local --cookie my_secret -S mix phx.server
+# for other local nodes you would do:
+PORT=4002 iex --name convoy2@convoy.local --cookie my_secret -S mix phx.server
+PORT=4003 iex --name convoy3@convoy.local --cookie my_secret -S mix phx.server
 
 # but the nodes won't automatically be connected
 iex> Node.list
@@ -108,14 +116,17 @@ iex> Node.list
 
 # can also communicate with the ConvoyWorker GenServer running on each node
 iex(convoy3@convoy.local)5> send({Convoy.ConvoyWorker, :"convoy1@convoy.local"}, :ping)
+
 # then on convoy1 you should see
 Received ping on node convoy1@convoy.local
 ```
 
-In a deployed enviroment, ensure that some RELEASE environment variables are set.
+In a deployed environment, ensure that some RELEASE environment variables are set.
 
+```bash
 RELEASE_DISTRIBUTION=name
 RELEASE_NODE=convoy@convoy.railway.internal
+```
 
 ## Docker
 
@@ -130,4 +141,8 @@ sudo docker run \
 -e PHX_HOST=localhost \
 -p4000:4000 \
 convoy:debug
+```
+
+```
+
 ```
