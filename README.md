@@ -84,7 +84,6 @@ To start the app:
 
 ```bash
 mix deps.get # or you could do mix setup
-
 mix phx.server
 ```
 
@@ -92,7 +91,67 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 ## Cluster stuff
 
-If you want to setup your local instance for manual clustering purposes you should should:
+**Elixir Cluster on Railway**
+
+There are a few extra steps needed to make sure that your elixir nodes can connect
+using the erlang port mapper daemon (EPMD) on Railway's private network.
+
+For each node, we need to set some env vars:
+
+```bash
+# standard for phoenix deployments
+PHX_HOST=..
+SECRET_KEY_BASE=..
+
+# required for clustering via node names and dns lookups
+# the RELEASE_NODE should correspond to the node's
+# internal dns name that railway generates
+RELEASE_DISTRIBUTION=name
+RELEASE_NODE=convoy@convoy.railway.internal
+# cookies must match between nodes
+RELEASE_COOKIE="some-super-secret-cookie"
+# critical erlang flags
+ERL_AFLAGS="-proto_dist inet6_tcp -kernel inet_dist_listen_min 4444 inet_dist_listen_max 4444"
+```
+
+A little bit more about the erlang flags:
+
+`-proto_dist inet6_tcp` forces erlang's distribution protocol to use ipv6. Railway's
+internal private network only supports ipv6.
+
+`-kernel inet_dist_listen_min 4444 inet_dist_listen_max 4444` ensures that distributed communication happens on a specific port. If not set a random high numbered port will be used which is not supported by railway's internal network. You must be explicit about the port.
+
+If only these environment variables are set, nodes should be able to communicate. But you will have to manually connect them using `Node.connect/1` e.g. `Node.connect(:"convoy@convoy.railway.internal")`.
+
+**Elixir Node Auto-Discovery on Railway**
+
+It'd be cooler if the nodes just automatically connect when you spin them up. Utilizing `libcluster` and our own custom dns strategy they can!
+
+Put this `libcluster` config in your `config.exs`:
+
+```elixir
+config :libcluster,
+  topologies: [
+    convoy_topology: [
+      strategy: Convoy.DnsPollRailway,
+      config: [
+        polling_interval: 5_000,
+        query: "convoy.railway.internal",
+        node_basename: "convoy"
+      ]
+    ]
+  ]
+```
+
+`Convoy.DnsPollRailway` is our own custom strategy defined in `lib/dns_poll_railway.ex`.
+It's a literal dupe of `libcluster`'s `Cluster.Strategy.DNSPoll` but instead of looking up ip's with `:inet_res.lookup/2`, we lookup hostnames with `:inet_res.getbyname/2` based off of the query provided in the config. In our case, the query corresponds to the "control-plane" of the cluster.
+
+Now, when you spin up nodes, you can just do `Node.list` on any node in the cluster to see them connect.
+
+> Please keep in mind that `Convoy.DnsPollRailway` is not production ready as thorough testing has yet to be done. But it can be a good starting point and can be adjusted based on your needs.
+
+**Local Cluster**
+If you want to setup your local instance for manual clustering purposes you should:
 
 ```bash
 # add this to your /etc/hosts
@@ -121,13 +180,6 @@ iex(convoy3@convoy.local)5> send({Convoy.ConvoyWorker, :"convoy1@convoy.local"},
 Received ping on node convoy1@convoy.local
 ```
 
-In a deployed environment, ensure that some RELEASE environment variables are set.
-
-```bash
-RELEASE_DISTRIBUTION=name
-RELEASE_NODE=convoy@convoy.railway.internal
-```
-
 ## Docker
 
 ```bash
@@ -139,6 +191,9 @@ mix phx.gen.secret
 sudo docker run \
 -e SECRET_KEY_BASE="<redacted>" \
 -e PHX_HOST=localhost \
+-e RELEASE_DISTRIBUTION=name \
+-e RELEASE_NODE=convoy@convoy.local \
+-e PORT=4000 \
 -p4000:4000 \
 convoy:debug
 ```
