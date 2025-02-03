@@ -1,4 +1,12 @@
 defmodule ConvoyWeb.ShellLive do
+  @moduledoc """
+
+  The Phoenix LiveView that emulates a "shell" for the corresponding
+  elixir node. The commands you run in the shell execute on the
+  node itself. All stdout/stderr messages you see are directly from
+  that node.
+  """
+
   use ConvoyWeb, :live_view
   alias Phoenix.LiveView.JS
   alias Convoy.Railway
@@ -115,14 +123,12 @@ defmodule ConvoyWeb.ShellLive do
 
   @impl true
   def handle_info({:load_instance_info, instance}, socket) do
-    Logger.info(":load_instance_info: #{inspect(instance)}")
     node = Convoy.Node.load_instance_info(socket.assigns.node, instance)
     {:noreply, assign(socket, node: node)}
   end
 
   @impl true
   def handle_info({:set_status, status}, socket) do
-    Logger.info(":set_status #{status}")
     node = socket.assigns.node
 
     if status != node.status do
@@ -140,6 +146,9 @@ defmodule ConvoyWeb.ShellLive do
     {:noreply, socket}
   end
 
+  # Handles running a command on a node
+  # Determines where it should execute the command
+  # either on this node or a remote node.
   defp run_cmd(socket, value) do
     node = socket.assigns.node
 
@@ -160,7 +169,6 @@ defmodule ConvoyWeb.ShellLive do
 
     case List.last(history) do
       {last_cmd, _} ->
-        IO.puts("got last command: #{last_cmd}")
         assign(socket, curr_command: last_cmd)
 
       nil ->

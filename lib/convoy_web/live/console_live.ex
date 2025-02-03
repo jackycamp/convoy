@@ -1,4 +1,10 @@
 defmodule ConvoyWeb.ConsoleLive do
+  @moduledoc """
+  The app's main Phoenix LiveView. 
+  Allows one to spin up and spin down elixir nodes, 
+  and interact with their shells, in a railway environment.
+  """
+
   use ConvoyWeb, :live_view
   alias Convoy.Railway
   require Logger
@@ -35,7 +41,6 @@ defmodule ConvoyWeb.ConsoleLive do
     Phoenix.PubSub.subscribe(Convoy.PubSub, "nodes")
 
     nodes = Railway.get_nodes()
-    Logger.info("nodes: #{inspect(nodes)}")
 
     {:ok,
      assign(socket,
@@ -51,7 +56,6 @@ defmodule ConvoyWeb.ConsoleLive do
       {:noreply, socket}
     else
       name = "convoy-#{shortid()}"
-      Logger.info("generated name: #{name}")
       Task.start(fn -> Railway.launch_node(name) end)
 
       node =
@@ -65,14 +69,12 @@ defmodule ConvoyWeb.ConsoleLive do
 
   @impl true
   def handle_info({:add_node, node}, socket) do
-    Logger.info("handle info, add node: #{inspect(node)}}")
     nodes = Map.put(socket.assigns.nodes, node["id"], node)
     {:noreply, assign(socket, nodes: nodes)}
   end
 
   @impl true
   def handle_info({:del_node, id}, socket) do
-    Logger.info("handle info, del node, #{id}")
     nodes = Map.delete(socket.assigns.nodes, id)
     {:noreply, assign(socket, nodes: nodes)}
   end
