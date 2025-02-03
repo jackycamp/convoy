@@ -2,13 +2,13 @@ defmodule Convoy.Utils do
   require Logger
 
   @unsafe_terms [
-    # "System",
-    # "File",
-    # "Port",
-    # "spawn",
-    # "Process"
-    # "cookie",
-    # "env"
+    "System",
+    "File",
+    "Port",
+    "spawn",
+    "Process",
+    "cookie",
+    "env"
   ]
 
   # Some really basic unsafe command checking.

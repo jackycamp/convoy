@@ -19,6 +19,24 @@ https://github.com/user-attachments/assets/ab1a363f-d636-4fc2-b706-11c24f6ff363
 
 [also on yt](https://youtu.be/JZABhEIZkko)
 
+## Some commands
+
+Never used an interactive elixir shell before? No sweat, here's some commands to help
+showcase some possibilities. Note, the prompt has been removed from the command to
+allow for copy and pasting :).
+
+```bash
+Node.self
+Node.list
+Node.connect(~c"convoy@convoy.railway.internal")
+
+# calling a function on another node
+:rpc.call(:"convoy@convoy-eual.railway.internal", Convoy.Railway, :me, [])
+
+# communicate with a remote GenServer
+send({Convoy.ConvoyWorker, :"convoy@convoy-eual.railway.internal"}, :ping)
+```
+
 ## Modules of interest
 
 **ConvoyWeb.ConsoleLive**
